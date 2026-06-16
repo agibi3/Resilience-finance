@@ -1,55 +1,104 @@
-import React from 'react';
-import { Eye, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertTriangle, Lightbulb, MessageCircle, Send, Sparkles } from 'lucide-react';
 
-export default function ScenariosTable({ history }) {
+export default function AdvisorPanel({ warnings = [], recommendations = [] }) {
+  const safeWarnings = Array.isArray(warnings) ? warnings : [];
+  const safeRecommendations = Array.isArray(recommendations) ? recommendations : [];
+  
+  // State for the AI Follow-up Chat
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+    
+    console.log("Sending query to AI:", chatInput);
+    // Add your backend API call here later to actually process the chat
+    
+    setChatInput('');
+    setIsChatOpen(false); // Close it after sending, or you can build a full chat log here
+  };
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-6">
-      <div className="px-6 py-4 border-b border-slate-100">
-        <h3 className="font-bold text-slate-800 text-sm">Recent Scenarios</h3>
-        <p className="text-xs text-slate-400 mt-0.5">Your last saved scenario simulations</p>
+    <div className="w-full lg:w-80 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+      
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-1">
+        <Sparkles className="w-4 h-4 text-purple-500" />
+        <h3 className="font-bold text-slate-800 text-sm">AI Financial Advisor</h3>
+        <span className="text-slate-400 text-xs cursor-pointer ml-auto">ⓘ</span>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              <th className="px-6 py-3">Scenario Name</th>
-              <th className="px-6 py-3">Created On</th>
-              <th className="px-6 py-3">Key Changes</th>
-              <th className="px-6 py-3">Cash Runway</th>
-              <th className="px-6 py-3">Risk Level</th>
-              <th className="px-6 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-600">
-            {history.map((row) => (
-              <tr key={row.id} className="hover:bg-slate-50/50 transition">
-                <td className="px-6 py-3.5 font-bold text-slate-800">{row.scenario_name}</td>
-                <td className="px-6 py-3.5 text-slate-400">
-                  {new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </td>
-                <td className="px-6 py-3.5 text-slate-500">
-                  {`Inflation ${row.inflation_rate}%, Terms ${row.payment_terms}d, Sales ${row.sales_growth}%`}
-                </td>
-                <td className={`px-6 py-3.5 font-bold ${row.resulting_runway < 30 ? 'text-red-500' : 'text-slate-700'}`}>
-                  {row.resulting_runway} Days
-                </td>
-                <td className="px-6 py-3.5">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${
-                    row.risk_level === 'High' ? 'bg-red-50 text-red-600' : 
-                    row.risk_level === 'Medium' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'
-                  }`}>
-                    {row.risk_level}
-                  </span>
-                </td>
-                <td className="px-6 py-3.5 text-right space-x-2">
-                  <button className="text-slate-400 hover:text-slate-600 inline-block"><Eye className="w-4 h-4" /></button>
-                  <button className="text-slate-400 hover:text-red-500 inline-block"><Trash2 className="w-4 h-4" /></button>
-                </td>
-              </tr>
+      <p className="text-[11px] text-slate-500 mb-4">Automated insights and recommendations based on your scenario.</p>
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto pr-1 space-y-5">
+        
+        {/* Warnings Section */}
+        {safeWarnings.length > 0 && (
+          <div className="space-y-2">
+            {safeWarnings.map((warning, index) => (
+              <div key={index} className="flex gap-2.5 p-3 bg-red-50 border border-red-100 rounded-lg text-xs font-medium text-red-700 leading-relaxed">
+                <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <p>{warning}</p>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        )}
+
+        {/* Recommendations Section */}
+        <div>
+          <h4 className="text-xs font-bold text-slate-800 mb-3">Top Recommendations</h4>
+          {safeRecommendations.length === 0 ? (
+            <p className="text-xs text-slate-400 italic">No recommendations available.</p>
+          ) : (
+            <div className="space-y-4">
+              {safeRecommendations.map((rec, index) => (
+                <div key={rec.id || index} className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center shrink-0">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 mb-0.5">{rec.title}</h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">{rec.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Interactive AI Chat Footer */}
+      <div className="mt-4 pt-4 border-t border-slate-100">
+        {!isChatOpen ? (
+          <button 
+            onClick={() => setIsChatOpen(true)}
+            className="w-full flex items-center justify-center gap-2 border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-600 hover:text-blue-600 text-xs font-bold py-2.5 rounded-lg transition"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Ask Follow-up Question
+          </button>
+        ) : (
+          <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+            <input 
+              type="text" 
+              autoFocus
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Ask about these metrics..." 
+              className="flex-1 text-xs border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+            <button 
+              type="submit"
+              className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
+        )}
+      </div>
+
     </div>
   );
 }
