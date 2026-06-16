@@ -1,25 +1,28 @@
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-from dotenv import load_dotenv
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-load_dotenv()
+# If Render provides a DATABASE_URL environment variable, use it. 
+# Otherwise, fall back to a local SQLite file for offline development.
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./local_dev.db")
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Quick fix for modern SQLAlchemy compatibility with Render/Heroku PostgreSQL URLs
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Added pool parameters to handle stale connections and firewalls automatically
 engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    pool_recycle=300
+    DATABASE_URL, 
+    # connect_args is ONLY needed for SQLite. We disable it if using Postgres.
+    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def get_db():
-  db = SessionLocal()
-  try:
-    yield db
-  finally:
-    db.close()
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
