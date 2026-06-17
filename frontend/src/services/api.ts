@@ -1,6 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export async function uploadFinancialFile(filee:any) {
+export async function uploadFinancialFile(file: File) {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -17,7 +17,9 @@ export async function uploadFinancialFile(filee:any) {
   return response.json();
 }
 
-export async function runSimulation(payload) {
+export async function runSimulation(
+  payload: Record<string, unknown>
+) {
   const response = await fetch(`${API_BASE_URL}/api/simulate`, {
     method: "POST",
     headers: {
@@ -48,7 +50,7 @@ export async function getCashSummary() {
   return response.json();
 }
 
-export async function askAI(question) {
+export async function askAI(question: string) {
   const response = await fetch(`${API_BASE_URL}/api/chat`, {
     method: "POST",
     headers: {
