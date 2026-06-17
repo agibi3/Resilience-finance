@@ -2,12 +2,14 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
+from pydantic import BaseModel
 
 import models
 import schemas
 import database
 from upload import router as upload_router
 from stress_engine import run_stress_test
+from ai_service import answer_financial_question
 
 # Initialize the database tables
 models.Base.metadata.create_all(bind=database.engine)
@@ -25,6 +27,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Schema for incoming AI Chat Requests
+class ChatQuery(BaseModel):
+    question: str
 
 @app.get("/")
 def root():
@@ -119,6 +125,12 @@ def get_scenarios(db: Session = Depends(database.get_db)):
         .order_by(models.ScenarioSimulation.created_at.desc())
         .all()
     )
+
+@app.post("/api/chat")
+def chat_with_ai(query: ChatQuery):
+    # Pass the frontend's question to your real OpenAI service
+    answer = answer_financial_question(query.question)
+    return {"answer": answer}
 
 if __name__ == "__main__":
     import uvicorn

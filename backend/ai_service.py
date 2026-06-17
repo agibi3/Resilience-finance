@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 client = OpenAI(
-api_key=os.getenv("OPENAI_API_KEY")
+    api_key=os.getenv("OPENAI_API_KEY")
 )
 
 class Recommendation(BaseModel):
@@ -27,10 +27,8 @@ def generate_financial_advice(
     wage: float,
     terms: int,
     sales: float
-    ):
-    
+):
     prompt = f"""
-    
     You are an experienced SME Chief Financial Officer.
     
     Financial Position:
@@ -51,7 +49,6 @@ def generate_financial_advice(
     """
     
     try:
-    
         response = client.beta.chat.completions.parse(
             model="gpt-4o-mini",
             messages=[
@@ -82,9 +79,7 @@ def generate_financial_advice(
         }
     
     except Exception as e:
-    
         print("AI ERROR:", e)
-    
         return {
             "warnings": [
                 f"Cash runway reduced to {stress_runway_days} days."
@@ -104,3 +99,27 @@ def generate_financial_advice(
                 }
             ]
         }
+
+def answer_financial_question(question: str) -> str:
+    """Handles free-form questions from the Advisor Panel chat."""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an expert AI Chief Financial Officer (CFO) helping a small business owner. Provide clear, practical, and concise financial advice based on standard accounting principles."
+                },
+                {
+                    "role": "user",
+                    "content": question
+                }
+            ],
+            temperature=0.5,
+            max_tokens=300
+        )
+        return response.choices[0].message.content
+
+    except Exception as e:
+        print("AI CHAT ERROR:", e)
+        return "I am currently unable to connect to my AI processing servers. Please check your API key or try again later."
