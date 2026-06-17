@@ -1,17 +1,13 @@
-from fastapi import FastAPI
-from fastapi import Depends
-
+from fastapi import FastAPI,Depends
 from sqlalchemy.orm import Session
-
 from typing import List
-
 import models
 import schemas
 import database
-
 from upload import router as upload_router
 from fastapi.middleware.cors import CORSMiddleware
 from stress_engine import run_stress_test
+from fastapi.middleware.cors import CORSMiddleware
 
 models.Base.metadata.create_all(
     bind = database.engine
@@ -20,8 +16,6 @@ models.Base.metadata.create_all(
 app = FastAPI(title = "Resilience Finance API")
 
 app.include_router(upload_router)
-
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,9 +27,9 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-return {
+    return {
     "message": "API Running"
-}
+    }
 
 @app.post(
     "/api/simulate",
@@ -48,39 +42,39 @@ def simulate(
     )
 ):
 
-cash = 42500
-revenue = 25000
-expenses = 18650
+    cash = 42500
+    revenue = 25000
+    expenses = 18650
+    
+    results = run_stress_test(
+        cash = cash,
+        revenue = revenue,
+        expenses = expenses,
+        inflation = payload.inflation_rate,
+        inventory = payload.inventory_increase,
+        wage = payload.wage_increase,
+        terms = payload.payment_terms,
+        sales = payload.sales_growth
+    )
 
-results = run_stress_test(
-    cash = cash,
-    revenue = revenue,
-    expenses = expenses,
-    inflation = payload.inflation_rate,
-    inventory = payload.inventory_increase,
-    wage = payload.wage_increase,
-    terms = payload.payment_terms,
-    sales = payload.sales_growth
-)
-
-scenario = models.ScenarioSimulation(
-    scenario_name = payload.scenario_name,
-    inflation_rate = payload.inflation_rate,
-    inventory_increase = payload.inventory_increase,
-    wage_increase = payload.wage_increase,
-    payment_terms = payload.payment_terms,
-    sales_growth = payload.sales_growth,
-    resulting_runway = results["cash_runway_stress"],
-    risk_level = results["risk_level"]
-)
-
-db.add(
-    scenario
-)
-
-db.commit()
-
-return results
+    scenario = models.ScenarioSimulation(
+        scenario_name = payload.scenario_name,
+        inflation_rate = payload.inflation_rate,
+        inventory_increase = payload.inventory_increase,
+        wage_increase = payload.wage_increase,
+        payment_terms = payload.payment_terms,
+        sales_growth = payload.sales_growth,
+        resulting_runway = results["cash_runway_stress"],
+        risk_level = results["risk_level"]
+    )
+    
+    db.add(
+        scenario
+    )
+    
+    db.commit()
+    
+    return results
 
 @app.get(
     "/api/scenarios",
@@ -89,28 +83,28 @@ return results
     ]
 )
 def get_scenarios(
-    db: Session = Depends(
-        database.get_db
+        db: Session = Depends(
+            database.get_db
+        )
+    ):
+    
+    return (
+        db.query(
+            models.ScenarioSimulation
+        )
+        .order_by(
+            models.ScenarioSimulation.created_at.desc()
+        )
+        .all()
     )
-):
-
-return (
-    db.query(
-        models.ScenarioSimulation
-    )
-    .order_by(
-        models.ScenarioSimulation.created_at.desc()
-    )
-    .all()
-)
 
 if __name__ == "__main__":
 
-import uvicorn
-
-uvicorn.run(
-    "main:app",
-    host = "0.0.0.0",
-    port = 8000,
-    reload = True
-)
+    import uvicorn
+    
+    uvicorn.run(
+        "main:app",
+        host = "0.0.0.0",
+        port = 8000,
+        reload = True
+    )
