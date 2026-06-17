@@ -6,7 +6,7 @@ export default function ScenarioControls({ controls, setControls, onRun }) {
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm w-full lg:w-80 flex flex-col justify-between">
+    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm w-max lg:w-80 flex flex-col justify-between">
       <div>
         <div className="flex items-center gap-1.5 mb-4">
           <h3 className="font-bold text-slate-800 text-sm">Scenario Controls</h3>

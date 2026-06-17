@@ -8,7 +8,7 @@ export default function RunwayChart({ chartData, baseDays, stressDays }) {
   const difference = safeBase - safeStress;
 
   return (
-    <div className="flex-1 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+    <div className="bg-white w-full p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-1.5">

@@ -112,7 +112,8 @@ async function handleFileUpload(file) {
       console.error(error);
     
       alert(
-        "Upload failed."
+          error
+        //"Upload failed."
       );
     
     } finally {setIsSyncing(false);}
@@ -188,9 +189,8 @@ function renderTabContent() {
             <div
               className="
               flex
-              flex-col
-              lg:flex-row
-              gap-5
+              flex-row
+              gap-2
               mt-5
             "
             >

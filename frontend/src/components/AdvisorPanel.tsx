@@ -2,17 +2,10 @@ import React, {
 useState
 } from "react";
 
-import {
-AlertTriangle,
-MessageCircle,
-Send,
-Sparkles,
-Loader2
-} from "lucide-react";
+import {AlertTriangle,MessageCircle,Send             ,Sparkles,Loader2
+        } from "lucide-react";
 
-import {
-askAI
-} from "../services/api";
+import {askAI} from "../services/api.ts";
 
 export default function AdvisorPanel({
 warnings = [],
@@ -94,7 +87,6 @@ return (
 
 <div
   className="
-  w-full
   lg:w-80
   bg-white
   p-5
