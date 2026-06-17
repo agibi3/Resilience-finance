@@ -2,12 +2,12 @@ import { DollarSign, Activity, Percent, Flame, Layers } from 'lucide-react';
 
 export default function MetricCards({ data }:any) {
   // Guard values safely against undefined properties using optional chaining and nullish values
-  const cashOnHand = data?.cash_on_hand ?? 0;
-  const runwayStress = data?.cash_runway_stress ?? 0;
-  const grossMargin = data?.gross_margin ?? 0;
-  const burnRate = data?.burn_rate ?? 0;
-  const workingCapital = data?.working_capital ?? 0;
-  const riskLevel = data?.risk_level ?? 'Low';
+  const cashOnHand:any = data?.cash_on_hand ?? 0;
+  const runwayStress:any = data?.cash_runway_stress ?? 0;
+  const grossMargin:any = data?.gross_margin ?? 0;
+  const burnRate:any = data?.burn_rate ?? 0;
+  const workingCapital:any = data?.working_capital ?? 0;
+  const riskLevel:any = data?.risk_level ?? 'Low';
 
   const cards = [
     { label: 'Cash on Hand', value: `$${cashOnHand.toLocaleString()}`, change: '↑ 8.4% vs last month', color: 'text-blue-600', bg: 'bg-blue-50', icon: DollarSign },

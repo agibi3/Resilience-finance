@@ -1,10 +1,10 @@
 import { Eye, Trash2 } from 'lucide-react';
 
-export default function ScenariosTable({ history }:any) {
+export default function ScenariosTable({ history }: any) {
   // Ensure array safety
   const safeHistory = Array.isArray(history) ? history : [];
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: any) => {
     if (!dateString) return 'N/A';
     try {
       return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -32,7 +32,8 @@ export default function ScenariosTable({ history }:any) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-600">
-            {safeHistory.map((row, idx) => {
+            {/* Added : any to row and idx here */}
+            {safeHistory.map((row: any, idx: any) => {
               const rowId = row.id || idx;
               const runway = row.resulting_runway ?? 0;
               const inf = row.inflation_rate ?? 0;

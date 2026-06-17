@@ -1,12 +1,13 @@
 import { useRef, useState } from "react";
 import { Upload, Calendar, ChevronDown, Menu, Loader2, CheckCircle2 } from "lucide-react";
 
-export default function TopBar({ onMenuToggle, onFileUpload }:any) {
-  const fileInputRef = useRef(null);
-  const [uploadState, setUploadState] = useState("idle");
+export default function TopBar({ onMenuToggle, onFileUpload }: any) {
+  // Safe TypeScript declaration for an input element ref
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadState, setUploadState] = useState<any>("idle");
 
-  async function handleFileChange(e) {
-    const file = e.target.files[0];
+  async function handleFileChange(e: any) {
+    const file: any = e.target.files[0];
     if (!file) return;
 
     try {
@@ -17,11 +18,11 @@ export default function TopBar({ onMenuToggle, onFileUpload }:any) {
       setTimeout(() => {
         setUploadState("idle");
       }, 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setUploadState("idle"); // Safely resets if the upload fails
+      setUploadState("idle");
     } finally {
-      e.target.value = null; // Clears the input so you can re-upload the same file if needed
+      e.target.value = null;
     }
   }
 
@@ -32,7 +33,7 @@ export default function TopBar({ onMenuToggle, onFileUpload }:any) {
           <Menu className="w-5 h-5" />
         </button>
         <div>
-          <h2 className="font-bold text-lg">Welcome Back 👋</h2>
+          <h2 className="font-bold text-lg">Welcome Back AGIBI 👋</h2>
           <p className="text-xs text-slate-500">SME Financial Dashboard</p>
         </div>
       </div>

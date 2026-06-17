@@ -1,6 +1,7 @@
-export default function ScenarioControls({ controls, setControls, onRun }:any) {
-  const handleChange = (field, val) => {
-    setControls(prev => ({ ...prev, [field]: val }));
+export default function ScenarioControls({ controls, setControls, onRun }: any) {
+  // Added : any to field and val, and fixed the (prev: any) syntax
+  const handleChange = (field: any, val: any) => {
+    setControls((prev: any) => ({ ...prev, [field]: val }));
   };
 
   return (
@@ -21,7 +22,7 @@ export default function ScenarioControls({ controls, setControls, onRun }:any) {
             </div>
             <input 
               type="range" min="0" max="20" value={controls.inflation_rate}
-              onChange={(e) => handleChange('inflation_rate', parseInt(e.target.value))}
+              onChange={(e: any) => handleChange('inflation_rate', parseInt(e.target.value))}
               className="w-full accent-blue-600 h-1.5 bg-slate-100 rounded-lg cursor-pointer"
             />
           </div>
@@ -34,7 +35,7 @@ export default function ScenarioControls({ controls, setControls, onRun }:any) {
             </div>
             <input 
               type="range" min="0" max="50" value={controls.inventory_increase}
-              onChange={(e) => handleChange('inventory_increase', parseInt(e.target.value))}
+              onChange={(e: any) => handleChange('inventory_increase', parseInt(e.target.value))}
               className="w-full accent-blue-600 h-1.5 bg-slate-100 rounded-lg cursor-pointer"
             />
           </div>
@@ -47,7 +48,7 @@ export default function ScenarioControls({ controls, setControls, onRun }:any) {
             </div>
             <input 
               type="range" min="0" max="30" value={controls.wage_increase}
-              onChange={(e) => handleChange('wage_increase', parseInt(e.target.value))}
+              onChange={(e: any) => handleChange('wage_increase', parseInt(e.target.value))}
               className="w-full accent-blue-600 h-1.5 bg-slate-100 rounded-lg cursor-pointer"
             />
           </div>
@@ -59,7 +60,8 @@ export default function ScenarioControls({ controls, setControls, onRun }:any) {
             </div>
             <select
               value={controls.payment_terms}
-              onChange={(e) => handleChange('payment_terms', parseInt(e.target.value))}
+              // Added : any to e
+              onChange={(e: any) => handleChange('payment_terms', parseInt(e.target.value))}
               className="w-full text-xs font-medium border border-slate-200 rounded-lg p-2 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               <option value={30}>30 Days (Net 30)</option>
@@ -76,7 +78,8 @@ export default function ScenarioControls({ controls, setControls, onRun }:any) {
             </div>
             <input 
               type="range" min="-20" max="50" value={controls.sales_growth}
-              onChange={(e) => handleChange('sales_growth', parseInt(e.target.value))}
+              // Added : any to e
+              onChange={(e: any) => handleChange('sales_growth', parseInt(e.target.value))}
               className="w-full accent-blue-600 h-1.5 bg-slate-100 rounded-lg cursor-pointer"
             />
           </div>

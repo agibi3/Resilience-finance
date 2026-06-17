@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { AlertTriangle, MessageCircle, Send, Sparkles, Loader2 } from "lucide-react";
-import { askAI } from "../services/api.ts";
+import { askAI } from "../services/api";
 
-export default function AdvisorPanel({ warnings = [], recommendations = [] }:any) {
+export default function AdvisorPanel({ warnings = [], recommendations = [] }: any) {
   const safeWarnings = Array.isArray(warnings) ? warnings : [];
   const safeRecommendations = Array.isArray(recommendations) ? recommendations : [];
 
@@ -11,7 +11,7 @@ export default function AdvisorPanel({ warnings = [], recommendations = [] }:any
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: any) {
     e.preventDefault();
 
     if (!question.trim()) return;
@@ -20,7 +20,8 @@ export default function AdvisorPanel({ warnings = [], recommendations = [] }:any
       setLoading(true);
       const result = await askAI(question);
       setAnswer(result.answer);
-    } catch (error) {
+    // Added : any to error here
+    } catch (error: any) {
       console.error(error);
       setAnswer("Unable to contact AI advisor.");
     } finally {
@@ -80,7 +81,7 @@ export default function AdvisorPanel({ warnings = [], recommendations = [] }:any
             <input
               type="text"
               value={question}
-              onChange={(e) => setQuestion(e.target.value)}
+              onChange={(e: any) => setQuestion(e.target.value)}
               placeholder="Ask about cash flow, runway, expenses..."
               className="flex-1 border rounded-lg p-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
             />

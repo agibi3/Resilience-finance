@@ -29,13 +29,13 @@ export default function App() {
     sales_growth: 0,
   });
 
-  const [metrics, setMetrics] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [trendData, setTrendData] = useState([]);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [history, setHistory] = useState<any>([]);
+  const [trendData, setTrendData] = useState<any>([]);
   const [cashSummary, setCashSummary] = useState(null);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [activeTab, setActiveTab] = useState("Resilience");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState<any>(false);
+  const [activeTab, setActiveTab] = useState<any>("Resilience");
+  const [isSidebarOpen, setIsSidebarOpen] = useState<any>(false);
 
   async function loadDashboard() {
     try {
@@ -47,18 +47,18 @@ export default function App() {
 
       const summary = await getCashSummary();
       setCashSummary(summary);
-    } catch (error) {
+    } catch (error:any) {
       console.error("Dashboard load failed", error);
     }
   }
 
-  async function handleFileUpload(file) {
+  async function handleFileUpload(file:any) {
     try {
       setIsSyncing(true);
       await uploadFinancialFile(file);
       await loadDashboard();
       alert("Financial file uploaded successfully.");
-    } catch (error) {
+    } catch (error:any) {
       console.error(error);
       alert(error.message || "Upload failed.");
       throw error; // <--- This prevents the fake "Success" state in TopBar
@@ -81,7 +81,7 @@ export default function App() {
 
       setMetrics(result);
       await loadDashboard();
-    } catch (error) {
+    } catch (error:any) {
       console.error(error);
       alert("Simulation failed.");
     } finally {

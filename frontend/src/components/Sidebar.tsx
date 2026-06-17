@@ -1,7 +1,7 @@
 import { Shield, TrendingUp, Calendar, FileText, X } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, isOpen, onClose }:any) {
-  const menuItems = [
+export default function Sidebar({ activeTab, setActiveTab, isOpen, onClose }: any) {
+  const menuItems: any[] = [
     { name: 'Resilience', icon: Shield },
     { name: 'Trends', icon: TrendingUp },
     { name: 'Cap Days', icon: Calendar },
@@ -36,7 +36,7 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, onClose }:any
 
       {/* Navigation item mappings */}
       <nav className="flex-1 space-y-1">
-        {menuItems.map((item) => {
+        {menuItems.map((item: any) => {
           const Icon = item.icon;
           const isActive = activeTab === item.name;
           

@@ -1,56 +1,99 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useState } from "react";
+import { AlertTriangle, MessageCircle, Send, Sparkles, Loader2 } from "lucide-react";
+import { askAI } from "../services/api";
 
-export default function RunwayChart({ chartData, baseDays, stressDays }:any) {
-  // Prevent calculations from outputting NaN strings
-  const safeBase = baseDays ?? 0;
-  const safeStress = stressDays ?? 0;
-  const difference = safeBase - safeStress;
+export default function AdvisorPanel({ warnings = [], recommendations = [] }: any) {
+  const safeWarnings = Array.isArray(warnings) ? warnings : [];
+  const safeRecommendations = Array.isArray(recommendations) ? recommendations : [];
+
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Added : any to the event parameter
+  async function handleSubmit(e: any) {
+    e.preventDefault();
+
+    if (!question.trim()) return;
+
+    try {
+      setLoading(true);
+      const result = await askAI(question);
+      setAnswer(result.answer);
+    } catch (error) {
+      console.error(error);
+      setAnswer("Unable to contact AI advisor.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="bg-white w-full p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-bold text-slate-800 text-sm">Cash Runway Projection</h3>
-            <span className="text-slate-400 text-xs cursor-pointer">ⓘ</span>
-          </div>
-          <select className="text-xs border border-slate-200 rounded p-1 bg-white font-medium text-slate-500">
-            <option>View by: Monthly</option>
-          </select>
-        </div>
-        <p className="text-xs text-slate-400 mb-4">See how long your cash will last under the selected scenario.</p>
-
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData || []} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tickFormatter={(val) => `$${val/1000}k`} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, '']} />
-              <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 600 }} />
-              <Line type="monotone" dataKey="baseCase" name="Base Case (Current)" stroke="#2563eb" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-              <Line type="monotone" dataKey="stressScenario" name="Stress Scenario" stroke="#ef4444" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+    <div className="lg:w-80 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+      <div className="flex items-center gap-2 mb-3">
+        <Sparkles className="w-4 h-4 text-purple-500" />
+        <h3 className="text-sm font-bold text-slate-800">AI Financial Advisor</h3>
       </div>
 
-      <div className="grid grid-cols-3 border-t border-slate-100 pt-4 mt-2 text-center">
+      <div className="flex-1 overflow-y-auto space-y-4">
+        {safeWarnings.map((warning, index) => (
+          <div
+            key={index}
+            className="flex gap-2 p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700"
+          >
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{warning}</span>
+          </div>
+        ))}
+
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Runway (Base Case)</span>
-          <p className="text-sm font-extrabold text-blue-600 mt-0.5">{safeBase} Days</p>
-          <span className="text-[10px] text-slate-400 font-medium">(Dec 18, 2025)</span>
+          <h4 className="text-xs font-bold mb-3">Recommendations</h4>
+          <div className="space-y-3">
+            {safeRecommendations.map((rec, index) => (
+              <div key={index} className="border-l-2 border-blue-500 pl-3">
+                <h5 className="text-xs font-bold text-slate-800">{rec.title}</h5>
+                <p className="text-[11px] text-slate-500">{rec.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="border-x border-slate-100">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Runway (Stress Scenario)</span>
-          <p className="text-sm font-extrabold text-red-500 mt-0.5">{safeStress} Days</p>
-          <span className="text-[10px] text-slate-400 font-medium">(Aug 9, 2025)</span>
-        </div>
-        <div>
-          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Difference</span>
-          <p className="text-sm font-extrabold text-red-600 mt-0.5">-{difference} Days</p>
-          <span className="px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-bold uppercase tracking-wide">High Risk</span>
-        </div>
+
+        {answer && (
+          <div className="p-3 rounded-lg bg-blue-50 border border-blue-100 mt-4">
+            <h4 className="text-xs font-bold text-blue-700 mb-2">AI Response</h4>
+            <p className="text-xs leading-relaxed text-slate-700">{answer}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 pt-4 border-t">
+        {!isChatOpen ? (
+          <button
+            onClick={() => setIsChatOpen(true)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border hover:bg-slate-50 text-xs font-bold transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Ask AI CFO
+          </button>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <input
+              type="text"
+              value={question}
+              onChange={(e: any) => setQuestion(e.target.value)}
+              placeholder="Ask about cash flow, runway, expenses..."
+              className="flex-1 border rounded-lg p-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
