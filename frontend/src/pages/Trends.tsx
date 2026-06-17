@@ -1,5 +1,3 @@
-import React from "react";
-
 import {
   ResponsiveContainer,
   LineChart,
@@ -13,7 +11,7 @@ import {
 
 export default function Trends({
   data = []
-}) {
+}:any) {
 
   return (
 

@@ -1,6 +1,6 @@
-const API_BASE_URL = "https://resilience-finance-backend.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export async function uploadFinancialFile(file) {
+export async function uploadFinancialFile(filee:any) {
   const formData = new FormData();
   formData.append("file", file);
 

@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { AlertTriangle, MessageCircle, Send, Sparkles, Loader2 } from "lucide-react";
 import { askAI } from "../services/api.ts";
 
-export default function AdvisorPanel({ warnings = [], recommendations = [] }) {
+export default function AdvisorPanel({ warnings = [], recommendations = [] }:any) {
   const safeWarnings = Array.isArray(warnings) ? warnings : [];
   const safeRecommendations = Array.isArray(recommendations) ? recommendations : [];
 

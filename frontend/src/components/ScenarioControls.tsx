@@ -1,6 +1,4 @@
-import React from 'react';
-
-export default function ScenarioControls({ controls, setControls, onRun }) {
+export default function ScenarioControls({ controls, setControls, onRun }:any) {
   const handleChange = (field, val) => {
     setControls(prev => ({ ...prev, [field]: val }));
   };

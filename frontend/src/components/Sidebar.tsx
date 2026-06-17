@@ -1,7 +1,6 @@
-import React from 'react';
 import { Shield, TrendingUp, Calendar, FileText, X } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, isOpen, onClose }) {
+export default function Sidebar({ activeTab, setActiveTab, isOpen, onClose }:any) {
   const menuItems = [
     { name: 'Resilience', icon: Shield },
     { name: 'Trends', icon: TrendingUp },

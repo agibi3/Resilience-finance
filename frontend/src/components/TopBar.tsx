@@ -1,7 +1,7 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Upload, Calendar, ChevronDown, Menu, Loader2, CheckCircle2 } from "lucide-react";
 
-export default function TopBar({ onMenuToggle, onFileUpload }) {
+export default function TopBar({ onMenuToggle, onFileUpload }:any) {
   const fileInputRef = useRef(null);
   const [uploadState, setUploadState] = useState("idle");
 

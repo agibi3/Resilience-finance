@@ -1,7 +1,6 @@
-import React from 'react';
 import { Eye, Trash2 } from 'lucide-react';
 
-export default function ScenariosTable({ history }) {
+export default function ScenariosTable({ history }:any) {
   // Ensure array safety
   const safeHistory = Array.isArray(history) ? history : [];
 

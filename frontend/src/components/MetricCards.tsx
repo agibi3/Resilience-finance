@@ -1,7 +1,6 @@
-import React from 'react';
 import { DollarSign, Activity, Percent, Flame, Layers } from 'lucide-react';
 
-export default function MetricCards({ data }) {
+export default function MetricCards({ data }:any) {
   // Guard values safely against undefined properties using optional chaining and nullish values
   const cashOnHand = data?.cash_on_hand ?? 0;
   const runwayStress = data?.cash_runway_stress ?? 0;

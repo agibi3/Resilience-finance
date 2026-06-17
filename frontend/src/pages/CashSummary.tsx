@@ -1,8 +1,6 @@
-import React from "react";
-
 export default function CashSummary({
   summary
-}) {
+}:any) {
 
   if (!summary) {
 

@@ -1,7 +1,6 @@
-import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-export default function RunwayChart({ chartData, baseDays, stressDays }) {
+export default function RunwayChart({ chartData, baseDays, stressDays }:any) {
   // Prevent calculations from outputting NaN strings
   const safeBase = baseDays ?? 0;
   const safeStress = stressDays ?? 0;
