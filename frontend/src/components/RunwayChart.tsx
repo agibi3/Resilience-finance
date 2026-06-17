@@ -1,99 +1,75 @@
-import { useState } from "react";
-import { AlertTriangle, MessageCircle, Send, Sparkles, Loader2 } from "lucide-react";
-import { askAI } from "../services/api";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend,
+} from "recharts";
 
-export default function AdvisorPanel({ warnings = [], recommendations = [] }: any) {
-  const safeWarnings = Array.isArray(warnings) ? warnings : [];
-  const safeRecommendations = Array.isArray(recommendations) ? recommendations : [];
+interface TrendPoint {
+  month?: string;
+  date?: string;
+  baseCase: number;
+  stressScenario: number;
+}
 
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [loading, setLoading] = useState(false);
+interface RunwayChartProps {
+  chartData: TrendPoint[];
+  baseDays?: number;
+  stressDays?: number;
+}
 
-  // Added : any to the event parameter
-  async function handleSubmit(e: any) {
-    e.preventDefault();
-
-    if (!question.trim()) return;
-
-    try {
-      setLoading(true);
-      const result = await askAI(question);
-      setAnswer(result.answer);
-    } catch (error) {
-      console.error(error);
-      setAnswer("Unable to contact AI advisor.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
+export default function RunwayChart({
+  chartData = [],
+  baseDays = 0,
+  stressDays = 0,
+}: RunwayChartProps) {
   return (
-    <div className="lg:w-80 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="w-4 h-4 text-purple-500" />
-        <h3 className="text-sm font-bold text-slate-800">AI Financial Advisor</h3>
+    <div className="bg-white p-6 rounded-xl shadow-sm w-full">
+      {/* HEADER */}
+      <div className="mb-3">
+        <h2 className="text-lg font-bold">Runway Analysis</h2>
+        <p className="text-xs text-slate-500">
+          Base Runway: {baseDays} days • Stress Runway: {stressDays} days
+        </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-4">
-        {safeWarnings.map((warning, index) => (
-          <div
-            key={index}
-            className="flex gap-2 p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700"
-          >
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>{warning}</span>
-          </div>
-        ))}
+      {/* CHART */}
+      <div className="h-[420px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
 
-        <div>
-          <h4 className="text-xs font-bold mb-3">Recommendations</h4>
-          <div className="space-y-3">
-            {safeRecommendations.map((rec, index) => (
-              <div key={index} className="border-l-2 border-blue-500 pl-3">
-                <h5 className="text-xs font-bold text-slate-800">{rec.title}</h5>
-                <p className="text-[11px] text-slate-500">{rec.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+            <XAxis dataKey="month" />
 
-        {answer && (
-          <div className="p-3 rounded-lg bg-blue-50 border border-blue-100 mt-4">
-            <h4 className="text-xs font-bold text-blue-700 mb-2">AI Response</h4>
-            <p className="text-xs leading-relaxed text-slate-700">{answer}</p>
-          </div>
-        )}
-      </div>
+            <YAxis />
 
-      <div className="mt-4 pt-4 border-t">
-        {!isChatOpen ? (
-          <button
-            onClick={() => setIsChatOpen(true)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border hover:bg-slate-50 text-xs font-bold transition-colors"
-          >
-            <MessageCircle className="w-4 h-4" />
-            Ask AI CFO
-          </button>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <input
-              type="text"
-              value={question}
-              onChange={(e: any) => setQuestion(e.target.value)}
-              placeholder="Ask about cash flow, runway, expenses..."
-              className="flex-1 border rounded-lg p-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+            <Tooltip />
+
+            <Legend />
+
+            {/* Base Case Cash Runway */}
+            <Line
+              type="monotone"
+              dataKey="baseCase"
+              stroke="#16a34a"
+              strokeWidth={2}
+              name="Base Case"
             />
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </button>
-          </form>
-        )}
+
+            {/* Stress Scenario Cash Runway */}
+            <Line
+              type="monotone"
+              dataKey="stressScenario"
+              stroke="#dc2626"
+              strokeWidth={2}
+              name="Stress Scenario"
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

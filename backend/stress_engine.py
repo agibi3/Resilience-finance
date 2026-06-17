@@ -1,137 +1,76 @@
-from ai_service import generate_financial_advice
-    
+from typing import Any, Dict, List
+
+
 def run_stress_test(
-    cash,
-    revenue,
-    expenses,
-    inflation,
-    inventory,
-    wage,
-    terms,
-    sales
-    ):
+    cash: float,
+    revenue: float,
+    expenses: float,
+    inflation: float,
+    inventory: float,
+    wage: float,
+    terms: int,
+    sales: float,
+) -> Dict[str, Any]:
+    """Calculates runway reductions, burn rates, and financial risk levels
+
+    by applying simulated macroeconomic stress parameters to baseline metrics.
+    """
+    # --- Stress adjustments ---
+    stressed_revenue = revenue * (1 + sales / 100)
     
-    base_cash = cash
-    base_revenue = revenue
-    base_expenses = expenses
-    
-    stressed_revenue = (
-        base_revenue * (1 + sales / 100)
-    )
-    
-    stressed_expenses = (
-        base_expenses *
-        (
-            1 +
-            inflation / 100 +
-            inventory / 100 +
-            (wage / 100 * 0.5)
-        )
-    )
-    
-    terms_penalty = 0
-    
+    # Calculate stressed expenses based on inflation, inventory overhead, and 50% wage pass-through
+    expense_multiplier = 1 + (inflation / 100) + (inventory / 100) + ((wage / 100) * 0.5)
+    stressed_expenses = expenses * expense_multiplier
+
+    # Payment delay penalty (impact of extended vendor/customer net-terms on liquidity)
+    terms_penalty = 0.0
     if terms > 30:
-        terms_penalty = (
-            (terms - 30) / 30
-        ) * 3000
-    
-    final_burn = (
-        stressed_expenses -
-        stressed_revenue +
-        terms_penalty
-    )
-    
-    if final_burn < 5000:
-        final_burn = 5000
-    
-    base_runway = int(
-        (base_cash / base_expenses) * 30
-    )
-    
-    stress_runway = int(
-        (base_cash / final_burn) * 30
-    )
-    
+        terms_penalty = ((terms - 30) / 30) * 3000
+
+    final_burn = stressed_expenses - stressed_revenue + terms_penalty
+    final_burn = max(final_burn, 5000.0)
+
+    # --- Runway calculations (represented in days) ---
+    base_runway = int((cash / expenses) * 30) if expenses > 0 else 999
+    stress_runway = int((cash / final_burn) * 30)
+
+    # Categorize business risk position based on remaining survival runway days
     if stress_runway < 30:
         risk_level = "High"
     elif stress_runway < 60:
         risk_level = "Medium"
     else:
         risk_level = "Low"
-    
-    months = [
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec"
-    ]
-    
+
+    # --- Time series projection (forward-looking simulation) ---
+    months = ["May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     chart_data = []
-    
-    base_balance = base_cash
-    stress_balance = base_cash
-    
+    base_balance = cash
+    stress_balance = cash
+
     for month in months:
-    
         chart_data.append(
             {
                 "month": month,
-                "baseCase": max(
-                    0,
-                    round(base_balance, 2)
-                ),
-                "stressScenario": max(
-                    0,
-                    round(stress_balance, 2)
-                )
+                "baseCase": round(max(0.0, base_balance), 2),
+                "stressScenario": round(max(0.0, stress_balance), 2),
             }
         )
-    
-        base_balance -= base_expenses
+        base_balance -= expenses
         stress_balance -= final_burn
-    
-    ai = generate_financial_advice(
-        cash_on_hand=base_cash,
-        burn_rate=final_burn,
-        stress_runway_days=stress_runway,
-        inflation=inflation,
-        inventory=inventory,
-        wage=wage,
-        terms=terms,
-        sales=sales
-    )
-    
-    gross_margin = (
-        (
-            stressed_revenue -
-            stressed_expenses
-        ) / stressed_revenue
-    ) * 100
-    
+
+    # --- Gross margin calculation ---
+    gross_margin = 0.0
+    if stressed_revenue != 0:
+        gross_margin = ((stressed_revenue - stressed_expenses) / stressed_revenue) * 100
+
     return {
-        "cash_on_hand": base_cash,
+        "cash_on_hand": cash,
         "cash_runway_base": base_runway,
         "cash_runway_stress": stress_runway,
-        "gross_margin": round(
-            gross_margin,
-            1
-        ),
-        "burn_rate": round(
-            final_burn,
-            2
-        ),
-        "working_capital": round(
-            base_cash -
-            stressed_expenses,
-            2
-        ),
+        "gross_margin": round(gross_margin, 1),
+        "burn_rate": round(final_burn, 2),
+        "working_capital": round(cash - stressed_expenses, 2),
         "chart_data": chart_data,
         "risk_level": risk_level,
-        "warnings": ai["warnings"],
-        "recommendations": ai["recommendations"]
     }

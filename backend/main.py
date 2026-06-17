@@ -1,25 +1,27 @@
+import uvicorn
 from fastapi import FastAPI, Depends
-from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 from typing import List
-from pydantic import BaseModel
 
+# Import local modules and infrastructure
+import database
 import models
 import schemas
-import database
-from upload import router as upload_router
-from stress_engine import run_stress_test
 from ai_service import answer_financial_question
+from stress_engine import run_stress_test
+from analysis import router as analysis_router
 
-# Initialize the database tables
+# Core Database Initialization
 models.Base.metadata.create_all(bind=database.engine)
 
-app = FastAPI(title="Resilience Finance API")
+app = FastAPI(title="AI CFO Platform")
 
-# Include routers
-app.include_router(upload_router)
+# Include Sub-Routers
+app.include_router(analysis_router)
 
-# CORS configuration
+# Configure CORS Middleware
+# Note: Ensure to replace "*" with explicit origins in production environments
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,69 +30,91 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Schema for incoming AI Chat Requests
-class ChatQuery(BaseModel):
-    question: str
 
 @app.get("/")
 def root():
-    return {"message": "API Running"}
+    """Health check endpoint for the AI CFO API service."""
+    return {"message": "AI CFO API Running"}
 
-@app.get("/api/cash-summary")
-def get_cash_summary(db: Session = Depends(database.get_db)):
-    latest_upload = db.query(models.FinancialUpload).order_by(models.FinancialUpload.created_at.desc()).first()
-    
-    if not latest_upload:
-        # Fallback if no files have been uploaded yet
-        return {
-            "cash": 42500,
-            "revenue": 25000,
-            "expenses": 18650,
-            "filename": "Default Data",
-            "no_data": True
-        }
-    
+
+@app.get("/api/analysis/latest")
+def latest_analysis(db: Session = Depends(database.get_db)):
+    """Retrieves the most recent dataset analysis summary record."""
+    latest = (
+        db.query(models.DatasetAnalysis)
+        .order_by(models.DatasetAnalysis.created_at.desc())
+        .first()
+    )
+    if not latest:
+        return {"message": "No analysis found"}
+
     return {
-        "cash": latest_upload.cash,
-        "revenue": latest_upload.revenue,
-        "expenses": latest_upload.expenses,
-        "filename": latest_upload.filename
+        "id": latest.id,
+        "filename": latest.filename,
+        "dataset_type": latest.dataset_type,
+        "business_domain": latest.business_domain,
+        "executive_summary": latest.executive_summary,
+        "analysis": latest.analysis_json,
     }
 
-@app.get("/api/trends")
-def get_trends(db: Session = Depends(database.get_db)):
-    uploads = db.query(models.FinancialUpload).order_by(models.FinancialUpload.created_at.asc()).all()
-    
-    if not uploads:
-        return []
-        
+
+@app.get("/api/analysis/history")
+def analysis_history(db: Session = Depends(database.get_db)):
+    """Retrieves a chronological historical log of all processed analyses."""
+    analyses = (
+        db.query(models.DatasetAnalysis)
+        .order_by(models.DatasetAnalysis.created_at.desc())
+        .all()
+    )
     return [
         {
-            "id": u.id,
-            "filename": u.filename,
-            "revenue": u.revenue,
-            "expenses": u.expenses,
-            "cash": u.cash,
-            "date": u.created_at.strftime("%b %d")
-        } for u in uploads
+            "id": row.id,
+            "filename": row.filename,
+            "dataset_type": row.dataset_type,
+            "business_domain": row.business_domain,
+            "created_at": row.created_at,
+            "executive_summary": row.executive_summary,
+        }
+        # Iterate over records safely
+        for row in analyses
     ]
 
+
 @app.post("/api/simulate", response_model=schemas.SimulationResult)
-def simulate(payload: schemas.ScenarioCreate, db: Session = Depends(database.get_db)):
-    
-    # Grab the most recent financial data from the database
-    latest_upload = db.query(models.FinancialUpload).order_by(models.FinancialUpload.created_at.desc()).first()
-    
-    if latest_upload:
-        cash = latest_upload.cash
-        revenue = latest_upload.revenue
-        expenses = latest_upload.expenses
-    else:
-        # Backup default values
-        cash = 42500
-        revenue = 25000
-        expenses = 18650
-    
+def simulate(
+    payload: schemas.ScenarioCreate, 
+    db: Session = Depends(database.get_db)
+):
+    """Pulls business operational metrics dynamically from the latest analysis
+
+    and passes them to the stress engine runner.
+    """
+    latest = (
+        db.query(models.DatasetAnalysis)
+        .order_by(models.DatasetAnalysis.created_at.desc())
+        .first()
+    )
+
+    # Standard fallback financial defaults if no context exists
+    cash = 50000
+    revenue = 25000
+    expenses = 18000
+
+    if latest:
+        analysis = latest.analysis_json
+        kpis = analysis.get("kpis", {})
+
+        # Dynamically map case-insensitive metrics out of parsed AI analysis
+        for key, value in kpis.items():
+            key_lower = key.lower()
+            if "cash" in key_lower and isinstance(value, (int, float)):
+                cash = value
+            elif "revenue" in key_lower and isinstance(value, (int, float)):
+                revenue = value
+            elif "expense" in key_lower and isinstance(value, (int, float)):
+                expenses = value
+
+    # Compute scenario transformations via the mathematical stress engine
     results = run_stress_test(
         cash=cash,
         revenue=revenue,
@@ -99,9 +123,10 @@ def simulate(payload: schemas.ScenarioCreate, db: Session = Depends(database.get
         inventory=payload.inventory_increase,
         wage=payload.wage_increase,
         terms=payload.payment_terms,
-        sales=payload.sales_growth
+        sales=payload.sales_growth,
     )
 
+    # Persist specific simulation choices into the database logger
     scenario = models.ScenarioSimulation(
         scenario_name=payload.scenario_name,
         inflation_rate=payload.inflation_rate,
@@ -110,28 +135,51 @@ def simulate(payload: schemas.ScenarioCreate, db: Session = Depends(database.get
         payment_terms=payload.payment_terms,
         sales_growth=payload.sales_growth,
         resulting_runway=results["cash_runway_stress"],
-        risk_level=results["risk_level"]
+        risk_level=results["risk_level"],
     )
-    
     db.add(scenario)
     db.commit()
-    
+
     return results
 
+
 @app.get("/api/scenarios", response_model=List[schemas.ScenarioResponse])
-def get_scenarios(db: Session = Depends(database.get_db)):
+def scenarios(db: Session = Depends(database.get_db)):
+    """Retrieves all simulated execution scenarios generated by users."""
     return (
         db.query(models.ScenarioSimulation)
         .order_by(models.ScenarioSimulation.created_at.desc())
         .all()
     )
 
+
 @app.post("/api/chat")
-def chat_with_ai(query: ChatQuery):
-    # Pass the frontend's question to your real OpenAI service
-    answer = answer_financial_question(query.question)
+def chat(query: schemas.ChatQuery, db: Session = Depends(database.get_db)):
+    """Context-aware CFO chat that supports:
+    1. Frontend dataset context (preferred execution path)
+    2. Database fallback (latest generated analysis)
+    """
+    # PRIORITY 1: Check for incoming frontend UI context
+    context = query.context
+
+    # PRIORITY 2: Fallback to database context if frontend context is blank
+    if not context:
+        latest = (
+            db.query(models.DatasetAnalysis)
+            .order_by(models.DatasetAnalysis.created_at.desc())
+            .first()
+        )
+        if latest:
+            context = latest.analysis_json
+
+    # Execute LLM completion call via your service layer
+    answer = answer_financial_question(
+        question=query.question, 
+        business_context=context
+    )
+
     return {"answer": answer}
 
+
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

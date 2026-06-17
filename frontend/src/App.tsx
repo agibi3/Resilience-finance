@@ -1,27 +1,52 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import axios from "axios";
 
+// Layout & Navigation Components
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
+
+// Resilience Tab Core Dashboard Sub-components
 import MetricCards from "./components/MetricCards";
 import ScenarioControls from "./components/ScenarioControls";
 import RunwayChart from "./components/RunwayChart";
 import AdvisorPanel from "./components/AdvisorPanel";
 import ScenariosTable from "./components/ScenariosTable";
 
+// Additional Page Views
 import Trends from "./pages/Trends";
 import CashSummary from "./pages/CashSummary";
 import CapDays from "./pages/CapDays";
 
-import {
-  uploadFinancialFile,
-  runSimulation,
-  getScenarios,
-  getTrends,
-  getCashSummary,
-} from "./services/api";
+// ==========================================
+// TypeScript Interfaces
+// ==========================================
+
+interface ScenarioControlsState {
+  inflation_rate: number;
+  inventory_increase: number;
+  wage_increase: number;
+  payment_terms: number;
+  sales_growth: number;
+}
+
+interface AnalysisData {
+  trend_data: Array<Record<string, any>>;
+  trend_metrics: string[];
+  cash_runway_base?: number;
+  cash_runway_stress?: number;
+  warnings?: string[];
+  recommendations?: string[];
+  [key: string]: any; // Fallback for unstructured payload metadata
+}
 
 export default function App() {
-  const [controls, setControls] = useState({
+  // --- Component State ---
+  const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("Resilience");
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  
+  const [controls, setControls] = useState<ScenarioControlsState>({
     inflation_rate: 8,
     inventory_increase: 15,
     wage_increase: 6,
@@ -29,134 +54,113 @@ export default function App() {
     sales_growth: 0,
   });
 
-  const [metrics, setMetrics] = useState<any>(null);
-  const [history, setHistory] = useState<any>([]);
-  const [trendData, setTrendData] = useState<any>([]);
-  const [cashSummary, setCashSummary] = useState(null);
-  const [isSyncing, setIsSyncing] = useState<any>(false);
-  const [activeTab, setActiveTab] = useState<any>("Resilience");
-  const [isSidebarOpen, setIsSidebarOpen] = useState<any>(false);
-
-  async function loadDashboard() {
-    try {
-      const scenarios = await getScenarios();
-      setHistory(scenarios || []);
-
-      const trends = await getTrends();
-      setTrendData(trends || []);
-
-      const summary = await getCashSummary();
-      setCashSummary(summary);
-    } catch (error:any) {
-      console.error("Dashboard load failed", error);
-    }
-  }
-
-  async function handleFileUpload(file:any) {
+  // ==========================================
+  // Core API Service Handlers
+  // ==========================================
+  
+  async function handleAnalyze(file: File, period: string) {
     try {
       setIsSyncing(true);
-      await uploadFinancialFile(file);
-      await loadDashboard();
-      alert("Financial file uploaded successfully.");
-    } catch (error:any) {
-      console.error(error);
-      alert(error.message || "Upload failed.");
-      throw error; // <--- This prevents the fake "Success" state in TopBar
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("period", period);
+
+      const res = await axios.post<AnalysisData>(
+        "http://localhost:8000/api/analyze",
+        formData
+      );
+      setAnalysis(res.data);
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      alert("Analysis engine run failed. Please verify file integrity.");
     } finally {
       setIsSyncing(false);
     }
   }
 
-  async function fetchSimulation() {
-    try {
-      setIsSyncing(true);
-      const result = await runSimulation({
-        scenario_name: "Custom Scenario",
-        inflation_rate: controls.inflation_rate,
-        inventory_increase: controls.inventory_increase,
-        wage_increase: controls.wage_increase,
-        payment_terms: controls.payment_terms,
-        sales_growth: controls.sales_growth,
-      });
-
-      setMetrics(result);
-      await loadDashboard();
-    } catch (error:any) {
-      console.error(error);
-      alert("Simulation failed.");
-    } finally {
-      setIsSyncing(false);
-    }
-  }
-
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
+  // ==========================================
+  // Dynamic Tab Router
+  // ==========================================
+  
   function renderTabContent() {
     switch (activeTab) {
       case "Resilience":
         return (
           <>
-            <MetricCards data={metrics} />
-            <div className="flex flex-row gap-2 mt-5">
-              <ScenarioControls
-                controls={controls}
-                setControls={setControls}
-                onRun={fetchSimulation}
+            <MetricCards data={analysis} />
+            
+            <div className="flex flex-row gap-5 mt-5">
+              <ScenarioControls 
+                controls={controls} 
+                setControls={setControls} 
+                onRun={() => { /* Handler for /api/simulate endpoint integration */ }} 
               />
-              <RunwayChart
-                chartData={metrics?.chart_data || []}
-                baseDays={metrics?.cash_runway_base || 0}
-                stressDays={metrics?.cash_runway_stress || 0}
+              <RunwayChart 
+                chartData={analysis?.trend_data || []} 
+                baseDays={analysis?.cash_runway_base || 0} 
+                stressDays={analysis?.cash_runway_stress || 0} 
               />
-              <AdvisorPanel
-                warnings={metrics?.warnings || []}
-                recommendations={metrics?.recommendations || []}
+              <AdvisorPanel 
+                warnings={analysis?.warnings || []} 
+                recommendations={analysis?.recommendations || []} 
               />
             </div>
-            <ScenariosTable history={history} />
+            
+            <ScenariosTable history={[]} />
           </>
         );
       case "Trends":
-        return <Trends data={trendData} />;
+        return (
+          <Trends 
+            data={analysis?.trend_data || []} 
+            metrics={analysis?.trend_metrics || []} 
+          />
+        );
       case "Cash Summary":
-        return <CashSummary summary={cashSummary} />;
+        return <CashSummary summary={analysis} />;
       case "Cap Days":
-        return <CapDays metrics={metrics} />;
+        return <CapDays metrics={analysis} />;
       default:
         return null;
     }
   }
 
+  // ==========================================
+  // Main Render Template
+  // ==========================================
+  
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 text-slate-800 antialiased">
+      {/* Mobile Sidebar Navigation Overlay Background Backdrop */}
       {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
+        <div 
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden transition-opacity" 
+          onClick={() => setIsSidebarOpen(false)} 
         />
       )}
 
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
+      {/* Navigation Layout Controls */}
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
       />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <TopBar
-          onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          onFileUpload={handleFileUpload}
+        <TopBar 
+          onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
+          onAnalyze={handleAnalyze} 
         />
 
+        {/* Dynamic Inner Layout Body wrapper */}
         <main className="flex-1 p-4 md:p-6 overflow-y-auto relative">
           {isSyncing && (
-            <div className="absolute top-4 right-4 px-3 py-1 rounded bg-blue-100 text-blue-700 text-xs font-bold animate-pulse z-50">
-              Syncing...
+            <div className="absolute top-4 right-4 px-3 py-1.5 rounded-md bg-blue-100 border border-blue-200 text-blue-700 text-xs font-bold animate-pulse z-50 shadow-xs">
+              Analyzing dataset...
             </div>
           )}
+
           {renderTabContent()}
         </main>
       </div>
