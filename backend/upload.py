@@ -1,22 +1,22 @@
-    import os
-    import pandas as pd
-    
-    from fastapi import APIRouter
-    from fastapi import UploadFile
-    from fastapi import File
-    from fastapi import HTTPException
-    
-    router = APIRouter()
-    
-    UPLOAD_FOLDER = "uploads"
-    
-    os.makedirs(
+import os
+import pandas as pd
+
+from fastapi import APIRouter
+from fastapi import UploadFile
+from fastapi import File
+from fastapi import HTTPException
+
+router = APIRouter()
+
+UPLOAD_FOLDER = "uploads"
+
+os.makedirs(
     UPLOAD_FOLDER,
     exist_ok=True
     )
     
-    @router.post("/api/upload")
-    async def upload_financials(
+@router.post("/api/upload")
+async def upload_financials(
     file: UploadFile = File(...)
     ):
     

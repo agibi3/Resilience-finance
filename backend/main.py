@@ -1,7 +1,7 @@
-    from fastapi import FastAPI
-    from fastapi import Depends
-    
-    from sqlalchemy.orm import Session
+from fastapi import FastAPI
+from fastapi import Depends
+
+from sqlalchemy.orm import Session
     
 from typing import List
 
@@ -10,7 +10,7 @@ import schemas
 import database
 
 from upload import router as upload_router
-
+from fastapi.middleware.cors import CORSMiddleware
 from stress_engine import run_stress_test
 
 models.Base.metadata.create_all(
@@ -21,9 +21,7 @@ app = FastAPI(title="Resilience Finance API")
     
 app.include_router(upload_router)
     
-from fastapi.middleware.cors import CORSMiddleware
-    
-    app.add_middleware(
+app.add_middleware(
         CORSMiddleware,
         allow_origins=[""],
         allow_credentials=True,
@@ -32,7 +30,7 @@ from fastapi.middleware.cors import CORSMiddleware
     )
     
 @app.get("/")
-    def root():
+def root():
     return {
     "message": "API Running"
     }
@@ -104,7 +102,7 @@ def get_scenarios(
         .all()
     )
     
-if name == "main":
+if __name__ == "__main__":
     
     import uvicorn
     
