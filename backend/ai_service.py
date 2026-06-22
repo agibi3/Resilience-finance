@@ -25,6 +25,7 @@ if not api_key:
     )
 
 logger.info("OpenAI API key loaded successfully.")
+print(api_key)
 
 client = OpenAI(api_key=api_key)
 
@@ -178,5 +179,5 @@ def answer_financial_question(
         return response.choices[0].message.content
 
     except Exception as e:
-        logger.error(f"AI Chat Error: {e}", exc_info=True)
-        return "Unable to generate a response at this time."
+        logger.exception("AI Chat Error")
+        return f"ERROR: {str(e)}"
