@@ -1,68 +1,123 @@
-export default function ScenarioControls({ controls, setControls, onRun }: any) {
-  // Added : any to field and val, and fixed the (prev: any) syntax
-  const handleChange = (field: any, val: any) => {
-    setControls((prev: any) => ({ ...prev, [field]: val }));
+import React from "react";
+
+// ==========================================
+// TypeScript Interfaces
+// ==========================================
+
+interface ScenarioControlsState {
+  inflation_rate: number;
+  inventory_increase: number;
+  wage_increase: number;
+  payment_terms: number;
+  sales_growth: number;
+}
+
+interface ScenarioControlsProps {
+  controls: ScenarioControlsState;
+  setControls: React.Dispatch<React.SetStateAction<ScenarioControlsState>>;
+  onRun: () => void;
+}
+
+
+export default function ScenarioControls({
+  controls,
+  setControls,
+  onRun,
+}: ScenarioControlsProps) {
+  const handleChange = (key: keyof ScenarioControlsState, value: number) => {
+    setControls((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  // Resets controls back to baseline financial metrics
+  const handleReset = () => {
+    setControls({
+      inflation_rate: 0,
+      inventory_increase: 0,
+      wage_increase: 0,
+      payment_terms: 30,
+      sales_growth: 0,
+    });
   };
 
   return (
-    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm w-max lg:w-80 flex flex-col justify-between">
+    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm w-full lg:w-80 flex flex-col justify-between">
       <div>
-        <div className="flex items-center gap-1.5 mb-4">
+        {/* Header Block */}
+        <div className="flex items-center gap-1.5 mb-2">
           <h3 className="font-bold text-slate-800 text-sm">Scenario Controls</h3>
-          <span className="text-slate-400 text-xs cursor-pointer">ⓘ</span>
+          <span className="text-slate-400 text-xs cursor-help" title="Macroeconomic variables">ⓘ</span>
         </div>
-        <p className="text-xs text-slate-500 mb-5 leading-relaxed">Adjust variables to see how economic changes impact your business.</p>
+        <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+          Adjust variables to see how economic changes impact your business liquidity and runway.
+        </p>
         
-        <div className="space-y-4">
-          {/* Inflation Rate */}
+        {/* Input Controls Container */}
+        <div className="space-y-5">
+          
+          {/* Inflation Rate Slider */}
           <div>
             <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-              <label>Inflation Rate</label>
-              <span>{controls.inflation_rate}%</span>
+              <label htmlFor="inflation_rate">Inflation Rate</label>
+              <span className="font-mono text-slate-500">{controls.inflation_rate}%</span>
             </div>
             <input 
-              type="range" min="0" max="20" value={controls.inflation_rate}
-              onChange={(e: any) => handleChange('inflation_rate', parseInt(e.target.value))}
+              id="inflation_rate"
+              type="range" 
+              min="0" 
+              max="20" 
+              value={controls.inflation_rate}
+              onChange={(e) => handleChange('inflation_rate', parseInt(e.target.value, 10))}
               className="w-full accent-blue-600 h-1.5 bg-slate-100 rounded-lg cursor-pointer"
             />
           </div>
 
-          {/* Inventory Cost Increase */}
+          {/* Inventory Cost Increase Slider */}
           <div>
             <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-              <label>Inventory Cost Increase</label>
-              <span>{controls.inventory_increase}%</span>
+              <label htmlFor="inventory_increase">Inventory Cost Increase</label>
+              <span className="font-mono text-slate-500">{controls.inventory_increase}%</span>
             </div>
             <input 
-              type="range" min="0" max="50" value={controls.inventory_increase}
-              onChange={(e: any) => handleChange('inventory_increase', parseInt(e.target.value))}
+              id="inventory_increase"
+              type="range" 
+              min="0" 
+              max="50" 
+              value={controls.inventory_increase}
+              onChange={(e) => handleChange('inventory_increase', parseInt(e.target.value, 10))}
               className="w-full accent-blue-600 h-1.5 bg-slate-100 rounded-lg cursor-pointer"
             />
           </div>
 
-          {/* Wage Increase */}
+          {/* Wage Increase Slider */}
           <div>
             <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-              <label>Wage Increase</label>
-              <span>{controls.wage_increase}%</span>
+              <label htmlFor="wage_increase">Wage Increase</label>
+              <span className="font-mono text-slate-500">{controls.wage_increase}%</span>
             </div>
             <input 
-              type="range" min="0" max="30" value={controls.wage_increase}
-              onChange={(e: any) => handleChange('wage_increase', parseInt(e.target.value))}
+              id="wage_increase"
+              type="range" 
+              min="0" 
+              max="30" 
+              value={controls.wage_increase}
+              onChange={(e) => handleChange('wage_increase', parseInt(e.target.value, 10))}
               className="w-full accent-blue-600 h-1.5 bg-slate-100 rounded-lg cursor-pointer"
             />
           </div>
 
-          {/* Customer Payment Terms */}
+          {/* Customer Payment Terms Selector Dropdown */}
           <div>
             <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
-              <label>Customer Payment Terms</label>
+              <label htmlFor="payment_terms">Customer Payment Terms</label>
             </div>
             <select
+              id="payment_terms"
               value={controls.payment_terms}
-              // Added : any to e
-              onChange={(e: any) => handleChange('payment_terms', parseInt(e.target.value))}
-              className="w-full text-xs font-medium border border-slate-200 rounded-lg p-2 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              onChange={(e) => handleChange('payment_terms', parseInt(e.target.value, 10))}
+              className="w-full text-xs font-medium border border-slate-200 rounded-lg p-2.5 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
               <option value={30}>30 Days (Net 30)</option>
               <option value={60}>60 Days (Net 60)</option>
@@ -70,32 +125,39 @@ export default function ScenarioControls({ controls, setControls, onRun }: any) 
             </select>
           </div>
 
-          {/* Sales Growth Rate */}
+          {/* Sales Growth Rate Slider */}
           <div>
             <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-              <label>Sales Growth Rate</label>
-              <span>{controls.sales_growth}%</span>
+              <label htmlFor="sales_growth">Sales Growth Rate</label>
+              <span className="font-mono text-slate-500">{controls.sales_growth}%</span>
             </div>
             <input 
-              type="range" min="-20" max="50" value={controls.sales_growth}
-              // Added : any to e
-              onChange={(e: any) => handleChange('sales_growth', parseInt(e.target.value))}
+              id="sales_growth"
+              type="range" 
+              min="-20" 
+              max="50" 
+              value={controls.sales_growth}
+              onChange={(e) => handleChange('sales_growth', parseInt(e.target.value, 10))}
               className="w-full accent-blue-600 h-1.5 bg-slate-100 rounded-lg cursor-pointer"
             />
           </div>
+          
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mt-6">
+      {/* Execution Buttons Grid */}
+      <div className="grid grid-cols-2 gap-3 mt-8">
         <button 
-          onClick={() => setControls({ inflation_rate: 0, inventory_increase: 0, wage_increase: 0, payment_terms: 30, sales_growth: 0 })}
+          type="button"
+          onClick={handleReset}
           className="border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold py-2.5 rounded-lg transition"
         >
-          Reset
+          Reset Defaults
         </button>
         <button 
+          type="button"
           onClick={onRun}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 rounded-lg shadow-sm transition"
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 rounded-lg shadow-sm transition-colors"
         >
           Run Scenario
         </button>
