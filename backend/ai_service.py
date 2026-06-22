@@ -9,10 +9,18 @@ from openai import OpenAI
 from pydantic import BaseModel
 
 # ==========================================
-# Environment Setup
+# Environment Setup (FIXED)
 # ==========================================
 
-load_dotenv(Path(__file__).parent / ".env")
+# Always load .env if it exists (local dev)
+BASE_DIR = Path(__file__).resolve().parent
+ENV_PATH = BASE_DIR / ".env"
+
+# This will NOT break on Render even if .env doesn't exist
+if ENV_PATH.exists():
+    load_dotenv(dotenv_path=ENV_PATH)
+else:
+    load_dotenv()  # fallback (Render / system env vars)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,15 +28,11 @@ logger = logging.getLogger(__name__)
 api_key = os.getenv("OPENAI_API_KEY")
 
 if not api_key:
-    raise ValueError(
-        "OPENAI_API_KEY not found. Check your .env file."
-    )
+    raise ValueError("OPENAI_API_KEY not found in environment variables.")
 
 logger.info("OpenAI API key loaded successfully.")
-print(api_key)
 
 client = OpenAI(api_key=api_key)
-
 
 # ==========================================
 # Structured Output Schemas
@@ -54,18 +58,14 @@ class DatasetAnalysis(BaseModel):
     executive_summary: str
     trend_metrics: List[str]
     trend_summary: str
-    
-    # Enforce strict parsing using the TrendPoint schema
-    trend_data: List[TrendPoint] 
-    
+    trend_data: List[TrendPoint]
     risks: List[str]
     opportunities: List[str]
     kpis: Dict[str, Any]
     insights: List[Insight]
 
-
 # ==========================================
-# AI Core Functions
+# AI CORE FUNCTION
 # ==========================================
 
 def analyze_dataset(
@@ -74,13 +74,9 @@ def analyze_dataset(
     statistics: Dict[str, Any],
     trend_data: List[Dict[str, Any]]
 ) -> DatasetAnalysis:
-    """Generates a structured financial analysis utilizing OpenAI's 
-    Pydantic-enforced Structured Outputs feature.
-    """
+
     prompt = f"""
     You are a world-class CFO, FP&A Director, and Data Scientist.
-
-    Analyze this dataset deeply.
 
     COLUMNS:
     {json.dumps(columns, indent=2)}
@@ -91,25 +87,10 @@ def analyze_dataset(
     SAMPLE ROWS:
     {json.dumps(sample_rows[:10], indent=2)}
 
-    RAW TREND DATA (if available):
+    RAW TREND DATA:
     {json.dumps(trend_data[:20], indent=2)}
 
-    ---
-    TASKS:
-    1. Identify dataset type.
-    2. Identify business domain.
-    3. Extract KPIs.
-    4. Identify financial trends over time.
-    5. Build structured trend data for visualization.
-    6. Identify risks.
-    7. Identify opportunities.
-    8. Write an executive summary.
-    9. Provide actionable insights.
-
-    ---
-    TREND DATA FORMAT REQUIRED:
-    Return trend_data as a structured array.
-    If a metric is missing from the raw data, estimate logically or output 0.0.
+    Return structured financial analysis.
     """
 
     try:
@@ -118,11 +99,7 @@ def analyze_dataset(
             messages=[
                 {
                     "role": "system",
-                    "content": (
-                        "You are an AI CFO specializing in FP&A, financial modeling, "
-                        "forecasting, and business intelligence. "
-                        "You always output strictly structured financial intelligence."
-                    )
+                    "content": "You are an AI CFO producing structured financial insights."
                 },
                 {"role": "user", "content": prompt}
             ],
@@ -133,27 +110,18 @@ def analyze_dataset(
         return response.choices[0].message.parsed
 
     except Exception as e:
-        logger.error(f"AI Analysis Error: {e}", exc_info=True)
+        logger.exception("AI Analysis Error")
+        raise
 
-        return DatasetAnalysis(
-            dataset_type="Unknown",
-            business_domain="Unknown",
-            executive_summary="Analysis failed to complete due to an internal error.",
-            trend_metrics=[],
-            trend_summary="",
-            trend_data=[],
-            risks=[],
-            opportunities=[],
-            kpis={},
-            insights=[]
-        )
-
+# ==========================================
+# CHAT FUNCTION
+# ==========================================
 
 def answer_financial_question(
     question: str,
     business_context: Optional[Dict[str, Any]] = None
 ) -> str:
-    """Answers arbitrary financial questions using injected dataset context."""
+
     context_string = ""
     if business_context:
         context_string = f"\nBusiness Context:\n{json.dumps(business_context, indent=2)}"
@@ -165,8 +133,7 @@ def answer_financial_question(
                 {
                     "role": "system",
                     "content": (
-                        "You are an AI CFO with expertise in financial analysis, "
-                        "forecasting, accounting, and business intelligence."
+                        "You are an AI CFO expert in finance, forecasting, and BI."
                         f"{context_string}"
                     )
                 },
