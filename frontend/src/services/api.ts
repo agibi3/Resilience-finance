@@ -4,7 +4,7 @@ export async function uploadFinancialFile(file: File) {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/api/upload`, {
+  const response = await fetch(`${API_BASE_URL}/api/analyze`, {
     method: "POST",
     body: formData,
   });

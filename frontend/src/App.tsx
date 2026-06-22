@@ -39,6 +39,8 @@ interface AnalysisData {
   [key: string]: any; // Fallback for unstructured payload metadata
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function App() {
   // --- Component State ---
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
@@ -66,7 +68,7 @@ export default function App() {
       formData.append("period", period);
 
       const res = await axios.post<AnalysisData>(
-        "http://localhost:8000/api/analyze",
+        `${API_BASE_URL}/api/analyze`,
         formData
       );
       setAnalysis(res.data);
@@ -80,8 +82,8 @@ export default function App() {
 
   // ==========================================
   // Dynamic Tab Router
-  // ==========================================
-  
+  // =========================================
+  console.log(analysis)
   function renderTabContent() {
     switch (activeTab) {
       case "Resilience":

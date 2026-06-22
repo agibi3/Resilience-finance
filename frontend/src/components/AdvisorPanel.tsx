@@ -27,10 +27,6 @@ interface AdvisorPanelProps {
   recommendations?: Recommendation[];
 }
 
-// ==========================================
-// Component
-// ==========================================
-
 export default function AdvisorPanel({
   warnings = [],
   recommendations = [],
@@ -46,10 +42,7 @@ export default function AdvisorPanel({
   const [loading, setLoading] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // ==========================================
-  // Send message
-  // ==========================================
-
+  // Send message 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!question.trim()) return;
@@ -58,10 +51,8 @@ export default function AdvisorPanel({
       role: "user",
       content: question,
     };
-
     // Add user message
     setMessages((prev) => [...prev, userMessage]);
-    setQuestion("");
     setLoading(true);
 
     try {
@@ -82,13 +73,10 @@ export default function AdvisorPanel({
         },
       ]);
     } finally {
+      setQuestion("");
       setLoading(false);
     }
   }
-
-  // ==========================================
-  // UI
-  // ==========================================
 
   return (
     <div className="lg:w-80 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[600px]">

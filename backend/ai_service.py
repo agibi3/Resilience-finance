@@ -1,17 +1,32 @@
+import os
 import json
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from openai import OpenAI
 from pydantic import BaseModel
 
-# Initialize environment and logging
-load_dotenv()
+# ==========================================
+# Environment Setup
+# ==========================================
+
+load_dotenv(Path(__file__).parent / ".env")
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-client = OpenAI()
+api_key = os.getenv("OPENAI_API_KEY")
+
+if not api_key:
+    raise ValueError(
+        "OPENAI_API_KEY not found. Check your .env file."
+    )
+
+logger.info("OpenAI API key loaded successfully.")
+
+client = OpenAI(api_key=api_key)
 
 
 # ==========================================
