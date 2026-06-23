@@ -7,9 +7,8 @@ import {
   Loader2,
 } from "lucide-react";
 
-// ==========================================
-// Types & Schemas Alignment[span_12](start_span)[span_12](end_span)[span_13](start_span)[span_13](end_span)
-// ==========================================
+// FIX: Swapped out placeholder token declaration for explicit import from service asset layer
+import { askAI } from "../services/api";
 
 interface Message {
   role: "user" | "ai";
@@ -23,14 +22,10 @@ interface AdvisorInsight {
 }
 
 interface AdvisorPanelProps {
-  warnings?: string[];               // Maps to backend 'risks' string array[span_14](start_span)[span_14](end_span)
-  recommendations?: AdvisorInsight[]; // Maps structurally to backend 'insights' schema[span_15](start_span)[span_15](end_span)[span_16](start_span)[span_16](end_span)
-  activeContext?: Record<string, any> | null; // LIVE screen context (KPIs + simulated trend data)
+  warnings?: string[];               
+  recommendations?: AdvisorInsight[]; 
+  activeContext?: Record<string, any> | null; 
 }
-
-// Simulated placeholder interface wrapper for the API layer
-// Ensure your ../services/api.ts file accepts this second argument
-declare function askAI(question: string, context?: Record<string, any> | null): Promise<{ answer: string }>;
 
 export default function AdvisorPanel({
   warnings = [],
@@ -40,13 +35,11 @@ export default function AdvisorPanel({
   const safeWarnings = Array.isArray(warnings) ? warnings : [];
   const safeRecommendations = Array.isArray(recommendations) ? recommendations : [];
 
-  // Chat Interface State Controls[span_17](start_span)[span_17](end_span)
   const [messages, setMessages] = useState<Message[]>([]);
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // Send message pipeline[span_18](start_span)[span_18](end_span)
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!question.trim()) return;
@@ -60,12 +53,11 @@ export default function AdvisorPanel({
     setLoading(true);
 
     try {
-      // FIX: Passing activeContext ensures context-aware responses even if sliders are modified
       const result = await askAI(question, activeContext);
 
       const aiMessage: Message = {
         role: "ai",
-        content: result.answer, // Matches backend return {"answer": answer}[span_19](start_span)[span_19](end_span)
+        content: result.answer, 
       };
 
       setMessages((prev) => [...prev, aiMessage]);
@@ -96,7 +88,7 @@ export default function AdvisorPanel({
       {/* Main Visual Scroll Area */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-thin">
 
-        {/* Warnings Loop[span_20](start_span)[span_20](end_span) */}
+        {/* Warnings Loop */}
         {safeWarnings.length > 0 && (
           <div className="space-y-2">
             {safeWarnings.map((warning, i) => (
@@ -111,7 +103,7 @@ export default function AdvisorPanel({
           </div>
         )}
 
-        {/* Recommendations Loop[span_21](start_span)[span_21](end_span) */}
+        {/* Recommendations Loop */}
         {safeRecommendations.length > 0 && (
           <div>
             <h4 className="text-xs font-bold mb-3 text-slate-700 uppercase tracking-wider">Recommendations</h4>
@@ -136,7 +128,7 @@ export default function AdvisorPanel({
           </div>
         )}
 
-        {/* Real-time Conversation View Area[span_22](start_span)[span_22](end_span) */}
+        {/* Real-time Conversation View Area */}
         {messages.length > 0 && (
           <div className="space-y-3 pt-3 border-t border-slate-100">
             {messages.map((msg, i) => (
@@ -155,7 +147,7 @@ export default function AdvisorPanel({
         )}
       </div>
 
-      {/* Input Action Controls Footer[span_23](start_span)[span_23](end_span) */}
+      {/* Input Action Controls Footer */}
       <div className="mt-4 pt-4 border-t border-slate-100 shrink-0">
         {!isChatOpen ? (
           <button

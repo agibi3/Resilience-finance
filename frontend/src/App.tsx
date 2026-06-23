@@ -52,7 +52,6 @@ interface AnalysisData {
   risks?: string[];
   opportunities?: string[];
   insights?: AdvisorInsight[];
-  // Simulation Metrics combined at root level for seamless sub-component access
   cash_on_hand?: number;
   cash_runway_base?: number;
   cash_runway_stress?: number;
@@ -96,13 +95,11 @@ export default function App() {
       try {
         setIsSyncing(true);
         
-        // 1. Fetch latest raw analysis background logs
         const latestRes = await axios.get(`${API_BASE_URL}/api/analysis/latest`);
         
         if (latestRes.data && !latestRes.data.message) {
           const rawAnalysis = latestRes.data.analysis_json || latestRes.data;
           
-          // Hydrate baseline charts and counters automatically on initialization mount
           const baselineRes = await axios.post(`${API_BASE_URL}/api/simulate`, {
             scenario_name: "Baseline Initialization",
             inflation_rate: 0,
@@ -120,7 +117,6 @@ export default function App() {
           });
         }
 
-        // 2. Fetch execution log history for the ScenariosTable
         const historyRes = await axios.get(`${API_BASE_URL}/api/scenarios`);
         setScenarioHistory(historyRes.data);
       } catch (error) {
@@ -136,10 +132,6 @@ export default function App() {
   // Core Business Execution Handlers
   // ==========================================
 
-  /**
-   * Dispatches binary documents to parsing engine, and chains directly
-   * into a baseline simulation to populate metrics values instantly.
-   */
   async function handleAnalyze(file: File, period: string) {
     try {
       setIsSyncing(true);
@@ -147,16 +139,15 @@ export default function App() {
       formData.append("file", file);
       formData.append("period", period);
 
-      // Step 1: Submit dataset document matrix to analytics router pipeline
+      // FIX: Removed manual 'Content-Type' header assignment so Axios and the browser 
+      // can automatically inject the multipart boundary hash.
       const response = await axios.post<any>(
         `${API_BASE_URL}/api/analyze`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        formData
       );
 
       const dynamicPayload = response.data.analysis_json || response.data;
 
-      // Step 2: Instantly compute operational baseline model variables
       const baselineRes = await axios.post(`${API_BASE_URL}/api/simulate`, {
         scenario_name: "Baseline Run",
         inflation_rate: 0,
@@ -168,7 +159,6 @@ export default function App() {
 
       const simResults = baselineRes.data;
 
-      // Step 3: Map combined structural fields into unified dashboard context state
       setAnalysis({
         ...dynamicPayload,
         ...simResults,
@@ -184,7 +174,6 @@ export default function App() {
         trend_data: simResults.chart_data || dynamicPayload.trend_data || []
       });
 
-      // Automatically reset parameter controls back to zero coordinates on new data context
       setControls({
         inflation_rate: 0,
         inventory_increase: 0,
@@ -193,22 +182,24 @@ export default function App() {
         sales_growth: 0,
       });
 
-      // Synchronize database history log table
       const historyRes = await axios.get(`${API_BASE_URL}/api/scenarios`);
       setScenarioHistory(historyRes.data);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("File processing analytics pipe failed:", error);
-      alert("Failed to analyze dataset. Please check your data format structural values.");
+      
+      // FIX: Upgraded diagnostic reporting to expose actual error strings passing through the network
+      const backendError = error.response?.data?.detail 
+        || error.response?.data?.message 
+        || error.message 
+        || "Server communication error";
+        
+      alert(`Upload Analysis Failed: ${backendError}`);
     } finally {
       setIsSyncing(false);
     }
   }
 
-  /**
-   * Commits modified interactive parameter values to the financial forecasting engine,
-   * recalculating operational margins, runway paths, and scenario coordinate charts.
-   */
   async function executeSimulation() {
     if (!analysis) {
       alert("No financial context loaded. Please analyze a data profile template before simulation execution.");
@@ -226,7 +217,6 @@ export default function App() {
       const response = await axios.post(`${API_BASE_URL}/api/simulate`, payload);
       const results = response.data;
 
-      // Update structural values securely while maintaining core layout configurations
       setAnalysis((prev) => {
         if (!prev) return null;
         return {
@@ -241,33 +231,28 @@ export default function App() {
             working_capital: results.working_capital,
             risk_level: results.risk_level,
           },
-          trend_data: results.chart_data, // Dynamic coordinate override mapping
+          trend_data: results.chart_data,
         };
       });
 
-      // Synchronize database history log table
       const historyRes = await axios.get(`${API_BASE_URL}/api/scenarios`);
       setScenarioHistory(historyRes.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Macro stress simulation failure execution details:", error);
-      alert("Simulation processing failed to generate target metrics models.");
+      const backendError = error.response?.data?.detail || "Simulation calculation processing failure.";
+      alert(`Simulation Failed: ${backendError}`);
     } finally {
       setIsSyncing(false);
     }
   }
 
-  // ==========================================
-  // Tab Router Render Matrix
-  // ==========================================
   function renderTabContent() {
     switch (activeTab) {
       case "Resilience":
         return (
           <div className="space-y-6">
-            {/* KPI Metric Display Layer */}
             <MetricCards data={analysis} />
 
-            {/* Middle Section: Microeconomic Modifiers & Time-Series Graph */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
               <div className="lg:col-span-1 flex">
                 <ScenarioControls
@@ -285,7 +270,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Bottom Section: Logs & AI Advisory Layer */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <ScenariosTable history={scenarioHistory} />
@@ -294,6 +278,7 @@ export default function App() {
                 <AdvisorPanel
                   warnings={analysis?.risks || []}
                   recommendations={analysis?.insights || []}
+                  activeContext={analysis}
                 />
               </div>
             </div>
@@ -317,7 +302,6 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-blue-500 selection:text-white">
-      {/* Mobile Drawer Navigation Backdrop Backdrop Overlay */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden transition-all duration-200"
@@ -325,7 +309,6 @@ export default function App() {
         />
       )}
 
-      {/* Primary Navigation System */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -334,13 +317,11 @@ export default function App() {
       />
 
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Universal Top Header Actions Block */}
         <TopBar
           onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
           onAnalyze={handleAnalyze}
         />
 
-        {/* Global Loading Execution Feedback Toast */}
         <main className="flex-1 p-4 md:p-6 overflow-y-auto relative">
           {isSyncing && (
             <div className="fixed top-6 right-6 px-3 py-2 rounded-lg bg-blue-600 border border-blue-500 text-white text-xs font-bold animate-pulse z-50 shadow-md flex items-center gap-2">
@@ -349,7 +330,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Condition Empty State Display Shell */}
           {!analysis && activeTab === "Resilience" ? (
             <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-16 text-center bg-white shadow-xs mt-4">
               <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xl mb-4">
